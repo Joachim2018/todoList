@@ -1,0 +1,5 @@
+{
+  "name": "ZenPlan AI Todo",
+  "description": "A sophisticated, AI-powered task management application that uses Gemini to break down complex goals, suggest priorities, and provide intelligent productivity insights.",
+  "requestFramePermissions": []
+}
