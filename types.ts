@@ -19,11 +19,4 @@ export interface Todo {
   createdAt: number;
   subTasks: SubTask[];
   category: string;
-  aiInsights?: string;
-}
-
-export interface AIAnalysis {
-  summary: string;
-  criticalTaskIds: string[];
-  suggestions: string[];
 }

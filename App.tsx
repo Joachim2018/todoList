@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Todo, Priority, SubTask } from './types';
+import { Todo, Priority } from './types';
 import TodoInput from './components/TodoInput';
 import TodoItem from './components/TodoItem';
-import AIAssistant from './components/AIAssistant';
 
 const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>(() => {
@@ -38,20 +37,6 @@ const App: React.FC = () => {
     setTodos(todos.filter(t => t.id !== id));
   };
 
-  const addSubTasks = (todoId: string, subTasks: string[]) => {
-    setTodos(todos.map(t => {
-      if (t.id === todoId) {
-        const newSubs: SubTask[] = subTasks.map(text => ({
-          id: crypto.randomUUID(),
-          text,
-          completed: false
-        }));
-        return { ...t, subTasks: newSubs };
-      }
-      return t;
-    }));
-  };
-
   const toggleSubTask = (todoId: string, subTaskId: string) => {
     setTodos(todos.map(t => {
       if (t.id === todoId) {
@@ -70,6 +55,8 @@ const App: React.FC = () => {
     return true;
   });
 
+  const completionPercentage = todos.length === 0 ? 0 : Math.round((todos.filter(t => t.completed).length / todos.length) * 100);
+
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col">
       {/* Header */}
@@ -79,7 +66,7 @@ const App: React.FC = () => {
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
               <i className="fas fa-check-double text-lg"></i>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800">ZenPlan <span className="text-indigo-600">AI</span></h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-800">ZenPlan</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex bg-slate-100 p-1 rounded-xl">
@@ -110,10 +97,10 @@ const App: React.FC = () => {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+      <main className="flex-grow max-w-5xl mx-auto px-4 py-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column - Todos */}
+          {/* List Column */}
           <div className="lg:col-span-8 space-y-6">
             <TodoInput onAdd={addTodo} />
             
@@ -141,7 +128,6 @@ const App: React.FC = () => {
                       onToggle={toggleTodo}
                       onDelete={deleteTodo}
                       onToggleSubTask={toggleSubTask}
-                      onAddSubTasks={addSubTasks}
                     />
                   ))}
                 </div>
@@ -149,35 +135,47 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column - AI Insights */}
+          {/* Stats Column */}
           <div className="lg:col-span-4 lg:sticky lg:top-24">
-            <AIAssistant todos={todos} />
+            <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200 mb-6">
+              <h2 className="text-xl font-bold mb-4">Daily Overview</h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Total Progress</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-2xl font-bold">{completionPercentage}%</span>
+                    <span className="text-indigo-200 text-sm">{todos.filter(t => t.completed).length}/{todos.length} Done</span>
+                  </div>
+                  <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white transition-all duration-1000 ease-out"
+                      style={{ width: `${completionPercentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
             
-            {/* Quick Stats */}
-            <div className="mt-8 bg-white rounded-3xl p-6 border border-slate-200">
-              <h4 className="text-slate-800 font-bold mb-4">Productivity Score</h4>
-              <div className="flex items-end gap-2 mb-2">
-                <span className="text-4xl font-bold text-indigo-600">
-                  {todos.length === 0 ? 0 : Math.round((todos.filter(t => t.completed).length / todos.length) * 100)}%
-                </span>
-                <span className="text-slate-400 text-sm mb-1 font-medium">Weekly Progress</span>
-              </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-indigo-500 transition-all duration-1000 ease-out"
-                  style={{ width: `${todos.length === 0 ? 0 : (todos.filter(t => t.completed).length / todos.length) * 100}%` }}
-                ></div>
-              </div>
-              <div className="mt-6 space-y-4">
+            <div className="bg-white rounded-3xl p-6 border border-slate-200">
+              <h4 className="text-slate-800 font-bold mb-4">Task Breakdown</h4>
+              <div className="space-y-3">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">Total Created</span>
-                  <span className="font-bold text-slate-700">{todos.length}</span>
+                  <span className="text-slate-500 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-rose-500"></span> High Priority
+                  </span>
+                  <span className="font-bold text-slate-700">{todos.filter(t => t.priority === Priority.High).length}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">Sub-tasks Active</span>
-                  <span className="font-bold text-slate-700">
-                    {todos.reduce((acc, t) => acc + t.subTasks.filter(s => !s.completed).length, 0)}
+                  <span className="text-slate-500 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span> Medium Priority
                   </span>
+                  <span className="font-bold text-slate-700">{todos.filter(t => t.priority === Priority.Medium).length}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-500 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-slate-300"></span> Low Priority
+                  </span>
+                  <span className="font-bold text-slate-700">{todos.filter(t => t.priority === Priority.Low).length}</span>
                 </div>
               </div>
             </div>
@@ -186,9 +184,9 @@ const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-slate-200 text-center">
+      <footer className="py-8 border-t border-slate-200 text-center mt-auto">
         <p className="text-slate-400 text-sm">
-          Built with <i className="fas fa-heart text-rose-400 mx-1"></i> for better productivity.
+          ZenPlan Todo &bull; Designed for Focus
         </p>
       </footer>
     </div>

@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Priority } from '../types';
-import { suggestPriority } from '../services/geminiService';
 
 interface TodoInputProps {
   onAdd: (text: string, priority: Priority) => void;
@@ -9,27 +8,19 @@ interface TodoInputProps {
 
 const TodoInput: React.FC<TodoInputProps> = ({ onAdd }) => {
   const [text, setText] = useState('');
-  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [priority, setPriority] = useState<Priority>(Priority.Medium);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-    onAdd(text, Priority.Medium);
+    onAdd(text, priority);
     setText('');
-  };
-
-  const handleSmartAdd = async () => {
-    if (!text.trim()) return;
-    setIsSuggesting(true);
-    const suggested = await suggestPriority(text);
-    onAdd(text, suggested);
-    setText('');
-    setIsSuggesting(false);
+    setPriority(Priority.Medium);
   };
 
   return (
     <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-6 border border-slate-100 mb-8">
-      <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="relative flex-1">
           <input
             type="text"
@@ -48,22 +39,31 @@ const TodoInput: React.FC<TodoInputProps> = ({ onAdd }) => {
             </button>
           )}
         </div>
-        <div className="flex gap-2">
+        
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl w-full md:w-auto">
+            {Object.values(Priority).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPriority(p)}
+                className={`flex-1 md:flex-none px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                  priority === p 
+                    ? 'bg-white text-indigo-600 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          
           <button
             type="submit"
             disabled={!text.trim()}
-            className="flex-1 md:flex-none px-6 py-3 bg-slate-800 text-white font-semibold rounded-2xl hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full md:w-auto px-8 py-3 bg-slate-800 text-white font-semibold rounded-2xl hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add Task
-          </button>
-          <button
-            type="button"
-            onClick={handleSmartAdd}
-            disabled={!text.trim() || isSuggesting}
-            className="px-4 py-3 bg-indigo-50 text-indigo-600 font-semibold rounded-2xl hover:bg-indigo-100 transition-colors flex items-center gap-2 border border-indigo-100 disabled:opacity-50"
-          >
-            <i className={`fas ${isSuggesting ? 'fa-circle-notch fa-spin' : 'fa-bolt'}`}></i>
-            <span className="hidden sm:inline">Smart Priority</span>
+            Create Task
           </button>
         </div>
       </form>

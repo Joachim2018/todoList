@@ -1,34 +1,16 @@
 
 import React, { useState } from 'react';
-import { Todo, Priority, SubTask } from '../types';
-import { breakdownTask } from '../services/geminiService';
+import { Todo, Priority } from '../types';
 
 interface TodoItemProps {
   todo: Todo;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onToggleSubTask: (todoId: string, subTaskId: string) => void;
-  onAddSubTasks: (todoId: string, subTasks: string[]) => void;
 }
 
-const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, onToggleSubTask, onAddSubTasks }) => {
-  const [isBreakingDown, setIsBreakingDown] = useState(false);
+const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, onToggleSubTask }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const handleBreakdown = async () => {
-    if (todo.subTasks.length > 0) {
-      setIsExpanded(!isExpanded);
-      return;
-    }
-
-    setIsBreakingDown(true);
-    const steps = await breakdownTask(todo.text);
-    if (steps.length > 0) {
-      onAddSubTasks(todo.id, steps);
-      setIsExpanded(true);
-    }
-    setIsBreakingDown(false);
-  };
 
   const priorityColors = {
     [Priority.Low]: 'bg-slate-100 text-slate-600',
@@ -63,14 +45,15 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, onToggleS
           </p>
 
           <div className="mt-3 flex items-center gap-3">
-            <button
-              onClick={handleBreakdown}
-              disabled={isBreakingDown}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 disabled:opacity-50"
-            >
-              <i className={`fas ${isBreakingDown ? 'fa-spinner fa-spin' : (todo.subTasks.length > 0 ? (isExpanded ? 'fa-chevron-up' : 'fa-list-ul') : 'fa-wand-magic-sparkles')}`}></i>
-              {isBreakingDown ? 'Analyzing...' : (todo.subTasks.length > 0 ? (isExpanded ? 'Hide Steps' : `${todo.subTasks.length} Steps`) : 'AI Breakdown')}
-            </button>
+            {todo.subTasks.length > 0 && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5"
+              >
+                <i className={`fas ${isExpanded ? 'fa-chevron-up' : 'fa-list-ul'}`}></i>
+                {isExpanded ? 'Hide Subtasks' : `${todo.subTasks.length} Subtasks`}
+              </button>
+            )}
             <button
               onClick={() => onDelete(todo.id)}
               className="text-xs font-semibold text-slate-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
